@@ -1,0 +1,70 @@
+apiVersion: tekton.dev/v1beta1
+kind: Pipeline
+metadata:
+  name: clone-catalog-repo
+  namespace: joepipeline
+spec:
+  workspaces:
+    - name: git-source
+  params:
+    - default: 'https://github.com/joehuizenga/curated-catalog.git'
+      description: git-url
+      name: git-url
+      type: string
+    - default: master
+      description: git-branch
+      name: git-branch
+      type: string
+  tasks:
+    - name: clone-catalog-repo
+      params:
+        - name: url
+          value: |
+            $(params.git-url)
+        - name: revision
+          value: $(params.git-branch)
+        - name: submodules
+          value: 'true'
+        - name: depth
+          value: '1'
+        - name: sslVerify
+          value: 'true'
+        - name: deleteExisting
+          value: 'true'
+        - name: verbose
+          value: 'true'
+        - name: gitInitImage
+          value: >-
+            registry.redhat.io/openshift-pipelines/pipelines-git-init-rhel8@sha256:da1aedf0b17f2b9dd2a46edc93ff1c0582989414b902a28cd79bad8a035c9ea4
+        - name: userHome
+          value: /tekton/home
+      taskRef:
+        kind: ClusterTask
+        name: git-clone
+      workspaces:
+        - name: out
+          workspace: git-source
+    - name: run-opm
+      runAfter:
+        - clone-catalog-repo
+      taskRef:
+        kind: Task
+        name: run-opm
+---
+apiVersion: tekton.dev/v1beta1
+kind: PipelineRun
+metadata:
+  name: clone-catalog-repo-run
+  namespace: joepipeline
+spec:
+  pipelineRef:
+    name: clone-catalog-repo
+  workspaces:
+    - name: git-source
+      volumeClaimTemplate:
+        spec:
+          accessModes:
+            - ReadWriteOnce
+          resources:
+            requests:
+              storage: 1Gi

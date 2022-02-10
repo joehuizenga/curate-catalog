@@ -1,0 +1,10 @@
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: run-opm
+spec:
+  steps:
+    - name: run-diff
+      image: quay.io/operator-framework/opm:v1.20.0
+      workingDir: /workspace/source
+      command: ["opm", "alpha", "diff", "icr.io/cpopen/ibm-operator-catalog:latest", ">", "joe.out"]

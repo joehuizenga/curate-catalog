@@ -1,0 +1,20 @@
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: run-opm
+spec:
+  workspaces:
+#    - name: shared-workspace
+    - name: git-source
+  steps:
+    - name: run-diff
+      image: quay.io/huizenga/opm:1.19.5
+      #workingDir: /workspace/source
+      command: ["/bin/bash", "-c"]
+      args:
+        - |-
+          echo Running opm diff
+          echo "$(workspaces.git-source.path)"
+          /app/opm alpha diff icr.io/cpopen/ibm-operator-catalog:latest > joe.out
+          echo -----------------------------------
+  
